@@ -16,10 +16,62 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import generatePDF from "./utils/generatePDF";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { send } from "process";
 
 export default function Component() {
   const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [image, setImage] = useState("");
+  const [pdf, setPDF] = useState<Promise<string>>();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          setImage(event.target.result.toString());
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  useEffect(() => {
+    console.log(pdf);
+  }, [pdf]);
+
+  async function sendCertificateData(
+    certname: string,
+    title: string,
+    message: string,
+    image: string
+  ) {
+    const response = await fetch("/api/returnPDF", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        certname: certname,
+        title: title,
+        message: message,
+        image: image,
+      }),
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      return url;
+    } else {
+      const errorText = await response.text();
+      console.error("Error details:", errorText);
+      throw new Error("Failed to generate PDF");
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background">
       <Card className="w-full max-w-2xl p-8">
@@ -33,7 +85,7 @@ export default function Component() {
         <CardContent className="grid gap-6">
           <div className="space-y-2">
             <Label htmlFor="image">Upload Image</Label>
-            <Input id="image" type="file" />
+            <Input id="image" type="file" onChange={handleImageChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="excel">Upload Excel Spreadsheet</Label>
@@ -53,15 +105,24 @@ export default function Component() {
               <Input
                 id="certificate-title"
                 placeholder="Enter certificate title"
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="message">Message</Label>
-            <Textarea id="message" placeholder="Enter a message" rows={4} />
+            <Textarea
+              id="message"
+              placeholder="Enter a message"
+              rows={4}
+              onChange={(e) => setMessage(e.target.value)}
+            />
           </div>
           <div className="flex justify-end">
-            <Button type="submit" onClick={() => generatePDF(name, "h", "h")}>
+            <Button
+              type="submit"
+              onClick={() => sendCertificateData(name, title, message, image)}
+            >
               Generate Certificate
             </Button>
           </div>
