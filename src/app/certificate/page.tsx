@@ -1,11 +1,25 @@
+"use client";
+
 import React from 'react';
 import CertificateCard from '@/components/component/certificate';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const CertificatePage = () => {
-  const certificateData = {
-    name: "John Kyle Salaysay",
-    description: "      Lorem ipsum dolor sit, amet consectetur adipisicing elit. Ipsa suscipit explicabo omnis officiis asperiores. Fugit eligendi architecto ratione doloribus laboriosam libero optio tempore soluta, iste eos? Odit quis pariatur sed!",
-    date: "August 26, 2024"
+  const downloadCertificate = () => {
+    const certificate = document.getElementById('certificate-card');
+    if (certificate) {
+      html2canvas(certificate).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('certificate.pdf');
+      });
+    }
   };
 
   return (
@@ -18,11 +32,14 @@ const CertificatePage = () => {
           "Rose Memorial Auditorium, Central Philippine University, Iloilo City"
         ]}
       />
-      {/* <div className="mt-8 text-center">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      <div className="mt-8 text-center">
+        <button 
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={downloadCertificate}
+        >
           Download Certificate
         </button>
-      </div> */}
+      </div>
     </div>
   );
 };
